@@ -32,15 +32,10 @@ const setFeeData = async () => {
   editHtml('fee-json', JSON.stringify(feeDataFormatted, null, 2));
 }
 
-
 const aggregatorV3InterfaceABI = [{ 'inputs': [], 'name': 'decimals', 'outputs': [{ 'internalType': 'uint8', 'name': '', 'type': 'uint8' }], 'stateMutability': 'view', 'type': 'function' }, { 'inputs': [], 'name': 'description', 'outputs': [{ 'internalType': 'string', 'name': '', 'type': 'string' }], 'stateMutability': 'view', 'type': 'function' }, { 'inputs': [{ 'internalType': 'uint80', 'name': '_roundId', 'type': 'uint80' }], 'name': 'getRoundData', 'outputs': [{ 'internalType': 'uint80', 'name': 'roundId', 'type': 'uint80' }, { 'internalType': 'int256', 'name': 'answer', 'type': 'int256' }, { 'internalType': 'uint256', 'name': 'startedAt', 'type': 'uint256' }, { 'internalType': 'uint256', 'name': 'updatedAt', 'type': 'uint256' }, { 'internalType': 'uint80', 'name': 'answeredInRound', 'type': 'uint80' }], 'stateMutability': 'view', 'type': 'function' }, { 'inputs': [], 'name': 'latestRoundData', 'outputs': [{ 'internalType': 'uint80', 'name': 'roundId', 'type': 'uint80' }, { 'internalType': 'int256', 'name': 'answer', 'type': 'int256' }, { 'internalType': 'uint256', 'name': 'startedAt', 'type': 'uint256' }, { 'internalType': 'uint256', 'name': 'updatedAt', 'type': 'uint256' }, { 'internalType': 'uint80', 'name': 'answeredInRound', 'type': 'uint80' }], 'stateMutability': 'view', 'type': 'function' }, { 'inputs': [], 'name': 'version', 'outputs': [{ 'internalType': 'uint256', 'name': '', 'type': 'uint256' }], 'stateMutability': 'view', 'type': 'function' }]
-const priceFeedAddresses = {
-  rinkeby: '0x8A753747A1Fa494EC906cE90E9f37563A8AF630e',
-  homestead: '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'
-};
 
 const setEtherPrice = async () => {
-  const adr = priceFeedAddresses[networkData.name] || 'eth-usd.data.eth';
+  const adr = 'eth-usd.data.eth';
   const priceFeed = new ethers.Contract(adr, aggregatorV3InterfaceABI, provider);
   const decimals = await priceFeed.decimals();
   const result = await priceFeed.latestRoundData();
@@ -89,19 +84,23 @@ const testSign = async () => {
 }
 
 const main = async () => {
-  await provider.send('eth_requestAccounts', []);
-  await Promise.all([
-    await setFeeData(),
-    await setNetworkData(),
-    await setWalletAddress(),
-    await setWalletName(),
-    await setUserBalance(),
-    await setTxSent()
-  ])
-  await Promise.all([
-    await setEtherPrice(),
-  ]);
-  // await testSign();
+  try {
+    await provider.send('eth_requestAccounts', []),
+    await Promise.allSettled([
+      await setFeeData(),
+      await setNetworkData()
+    ]);
+    await Promise.allSettled([
+      await setEtherPrice(),
+      await setWalletAddress(),
+      await setWalletName(),
+      await setUserBalance(),
+      await setTxSent()
+    ]);
+    // await testSign();
+  } catch (e) {
+    console.error(e.message);
+  }
 };
 
 main();
